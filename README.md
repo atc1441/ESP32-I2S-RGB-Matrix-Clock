@@ -1,7 +1,7 @@
 # ESP32-I2S-RGB-Matrix-Clock
 
 
-This code is for the Youtube video about a simple DIY Clock see here:
+This code is for the Youtube video about a simple DIY RGB Led Matrix Clock see here:
 
 
 Needed library's for Arduino:
