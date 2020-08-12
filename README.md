@@ -12,5 +12,5 @@ Adafruit GFX library
 
 Adafruit BusIO library
 
-The used code includes a modified veriosn of this Library:
+The code includes a modified version of this Library:
 https://github.com/mrfaptastic/ESP32-RGB64x32MatrixPanel-I2S-DMA
