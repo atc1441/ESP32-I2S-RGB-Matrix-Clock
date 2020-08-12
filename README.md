@@ -2,7 +2,7 @@
 
 
 This code is for the Youtube video about a simple DIY RGB Led Matrix Clock see here:
-
+https://youtu.be/xni7RW5ren0
 
 Needed library's for Arduino:
 
