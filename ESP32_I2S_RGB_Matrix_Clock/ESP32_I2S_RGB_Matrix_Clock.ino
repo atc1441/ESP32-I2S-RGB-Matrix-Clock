@@ -14,7 +14,7 @@ struct tm tmstruct;
 long refresh, refresh_min;
 int brightness, brightness_night, start_time, stop_time;
 char dots;
-bool is_night_brightness;
+bool is_night_brightness, set_brightness = true;
 
 RGB64x32MatrixPanel_I2S_DMA display(true);
 WebServer server(80);
@@ -65,6 +65,7 @@ void setup() {
   stop_time = readFile(SPIFFS, "/brightness_stop.txt").toInt();
   if (brightness == 0 || brightness_night == 0 || start_time == 0 || stop_time == 0) {
     brightness = 16;
+    brightness_night = 2;
     start_time = 22;
     stop_time = 7;
     writeFile(SPIFFS, "/brightness.txt", String(brightness).c_str());
@@ -108,13 +109,15 @@ void disp_update_msg(String msg) {
 
 void check_light(int hour) {
   if ((hour >= start_time) || (hour <= stop_time)) {
-    if (!is_night_brightness) {
+    if (!is_night_brightness || set_brightness) {
       is_night_brightness = true;
+      set_brightness = false;
       display.setPanelBrightness(brightness_night);
     }
   } else {
-    if (is_night_brightness) {
+    if (is_night_brightness || set_brightness) {
       is_night_brightness = false;
+      set_brightness = false;
       display.setPanelBrightness(brightness);
     }
   }
@@ -140,6 +143,7 @@ void handleRoot() {
     }
   }
   server.send(200, "text/plain", "OK Day: " + String(brightness) + " , Night: " + String(brightness_night) + "\r\nStart: " + String(start_time) + " , Stop: " + String(stop_time));
+  set_brightness = true;
 }
 
 void handleNotFound() {
