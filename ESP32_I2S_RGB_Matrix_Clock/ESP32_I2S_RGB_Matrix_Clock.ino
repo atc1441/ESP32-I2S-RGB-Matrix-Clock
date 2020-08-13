@@ -14,6 +14,8 @@ struct tm tmstruct;
 long refresh, refresh_min;
 int brightness, brightness_night, start_time, stop_time;
 char dots;
+bool is_night_brightness;
+
 RGB64x32MatrixPanel_I2S_DMA display(true);
 WebServer server(80);
 
@@ -92,9 +94,6 @@ void loop() {
     display.setTextColor(display.color444(255, 0, 255));
     display.printf("%02i.%02i.%04i\r\n", tmstruct.tm_mday, ( tmstruct.tm_mon) + 1, (tmstruct.tm_year) + 1900);
     display.showDMABuffer();
-  }
-  if (millis() - refresh_min >= 60000) {
-    refresh_min = millis();
     check_light(tmstruct.tm_hour);
   }
 }
@@ -108,10 +107,16 @@ void disp_update_msg(String msg) {
 }
 
 void check_light(int hour) {
-  if ((hour >= start_time) && (hour <= stop_time)) {
-    display.setPanelBrightness(brightness_night);
+  if ((hour >= start_time) || (hour <= stop_time)) {
+    if (!is_night_brightness) {
+      is_night_brightness = true;
+      display.setPanelBrightness(brightness_night);
+    }
   } else {
-    display.setPanelBrightness(brightness);
+    if (is_night_brightness) {
+      is_night_brightness = false;
+      display.setPanelBrightness(brightness);
+    }
   }
 }
 
@@ -119,12 +124,10 @@ void handleRoot() {
   for (uint8_t i = 0; i < server.args(); i++) {
     if (server.argName(i) == "brightness") {
       brightness = server.arg(i).toInt();
-      display.setPanelBrightness(brightness);
       writeFile(SPIFFS, "/brightness.txt", String(brightness).c_str());
     }
     if (server.argName(i) == "brightness_night") {
       brightness_night = server.arg(i).toInt();
-      display.setPanelBrightness(brightness_night);
       writeFile(SPIFFS, "/brightness_night.txt", String(brightness_night).c_str());
     }
     if (server.argName(i) == "start") {
