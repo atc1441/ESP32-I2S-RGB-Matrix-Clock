@@ -48,6 +48,7 @@ void setup() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   while (WiFi.waitForConnectResult() != WL_CONNECTED) {
+    WiFi.begin(ssid, password);
     disp_update_msg("Connect\r\ncount:\r\n" + String(counter++));
     delay(500);
   }
