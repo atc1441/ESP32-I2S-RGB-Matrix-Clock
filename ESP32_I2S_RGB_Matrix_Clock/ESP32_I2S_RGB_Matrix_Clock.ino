@@ -109,7 +109,7 @@ void disp_update_msg(String msg) {
 }
 
 void check_light(int hour) {
-  if ((hour >= start_time) || (hour <= stop_time)) {
+  if ((hour >= start_time) || (hour < stop_time)) {
     if (!is_night_brightness || set_brightness) {
       is_night_brightness = true;
       set_brightness = false;
