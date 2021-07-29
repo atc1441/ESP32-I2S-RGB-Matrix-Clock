@@ -47,23 +47,18 @@ void setup() {
   });
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
-  while (WiFi.waitForConnectResult() != WL_CONNECTED) {
-    WiFi.begin(ssid, password);
-    disp_update_msg("Connect\r\ncount:\r\n" + String(counter++));
-    delay(500);
-  }
   ArduinoOTA.begin();
-  configTime(3600, 3600, "time.nist.gov", "0.pool.ntp.org", "1.pool.ntp.org");
   server.on("/", handleRoot);
   server.onNotFound(handleNotFound);
   server.begin();
   if (!SPIFFS.begin(true)) {
     disp_update_msg("SPIFFS Mount Failed"); delay(10000);
   }
-  brightness = readFile(SPIFFS, "/brightness.txt").toInt();
-  brightness_night = readFile(SPIFFS, "/brightness_night.txt").toInt();
-  start_time = readFile(SPIFFS, "/brightness_start.txt").toInt();
-  stop_time = readFile(SPIFFS, "/brightness_stop.txt").toInt();
+  //SPIFFS.format();
+  if (SPIFFS.exists("/brightness.txt"))brightness = readFile(SPIFFS, "/brightness.txt").toInt();
+  if (SPIFFS.exists("/brightness_night.txt"))brightness_night = readFile(SPIFFS, "/brightness_night.txt").toInt();
+  if (SPIFFS.exists("/brightness_start.txt"))start_time = readFile(SPIFFS, "/brightness_start.txt").toInt();
+  if (SPIFFS.exists("/brightness_stop.txt"))stop_time = readFile(SPIFFS, "/brightness_stop.txt").toInt();
   if (brightness == 0 || brightness_night == 0 || start_time == 0 || stop_time == 0) {
     brightness = 16;
     brightness_night = 2;
@@ -77,11 +72,13 @@ void setup() {
   display.setPanelBrightness(brightness);
 }
 
+unsigned long previousMillis = 0;
+unsigned long interval = 10000;
+bool first_connecting = false;
+
 void loop() {
-  server.handleClient();
   if (millis() - refresh >= 1000) {
     refresh = millis();
-    ArduinoOTA.handle();
     display.flipDMABuffer();
     display.fillScreen(display.color444(0, 0, 0));
     getLocalTime(&tmstruct);
@@ -97,6 +94,23 @@ void loop() {
     display.printf("%02i.%02i.%04i\r\n", tmstruct.tm_mday, ( tmstruct.tm_mon) + 1, (tmstruct.tm_year) + 1900);
     display.showDMABuffer();
     check_light(tmstruct.tm_hour);
+  }
+  if ((WiFi.status() != WL_CONNECTED) && (millis() - previousMillis >= interval))
+  {
+    Serial.print(millis());
+    Serial.println("Reconnecting to WiFi...");
+    WiFi.disconnect();
+    WiFi.reconnect();
+    previousMillis = millis();
+  }
+  if (WiFi.status() == WL_CONNECTED)
+  {
+    server.handleClient();
+    ArduinoOTA.handle();
+  }
+  if (first_connecting == false) {
+    first_connecting = true;
+    configTime(3600, 3600, "time.nist.gov", "0.pool.ntp.org", "1.pool.ntp.org");
   }
 }
 
